@@ -66,6 +66,34 @@ def handle_exception(e):
     return html, 500
 
 
+class VercelPathMiddleware:
+    """
+    Middleware WSGI para corregir las rutas cuando Vercel reescribe /(.*) a /api/index.py.
+    Restaura el path original solicitado en HTTP_X_MATCHED_PATH para que Flask no devuelva 404.
+    """
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        matched_path = environ.get("HTTP_X_MATCHED_PATH")
+        if matched_path:
+            environ["PATH_INFO"] = matched_path
+        else:
+            path = environ.get("PATH_INFO", "")
+            if path in ("/api/index.py", "/api/index", "/api"):
+                environ["PATH_INFO"] = "/"
+            elif path.startswith("/api/index.py/"):
+                environ["PATH_INFO"] = path[len("/api/index.py"):]
+            elif path.startswith("/api/index/"):
+                environ["PATH_INFO"] = path[len("/api/index"):]
+
+        return self.wsgi_app(environ, start_response)
+
+
+# Aplicar middleware de rutas de Vercel
+app.wsgi_app = VercelPathMiddleware(app.wsgi_app)
+
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -77,6 +105,15 @@ def login_required(f):
             return redirect(url_for("login", next=request.url))
         return f(*args, **kwargs)
     return decorated_function
+
+
+# Ruta fallback de seguridad para Vercel
+@app.route("/api/index.py")
+@app.route("/api/index")
+def vercel_entry_fallback():
+    if "user_id" in session:
+        return redirect(url_for("index"))
+    return redirect(url_for("login"))
 
 
 # ------------------ AUTENTICACIÓN (LOGIN / LOGOUT) ------------------
