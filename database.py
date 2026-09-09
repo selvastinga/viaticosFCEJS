@@ -10,8 +10,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # Configuración de base de datos
 DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("SUPABASE_DB_URL")
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+if DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.strip()
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    if "sslmode=" not in DATABASE_URL:
+        sep = "&" if "?" in DATABASE_URL else "?"
+        DATABASE_URL = f"{DATABASE_URL}{sep}sslmode=require"
 
 IS_POSTGRES = bool(DATABASE_URL)
 
@@ -22,12 +27,20 @@ if IS_POSTGRES:
     except ImportError:
         IS_POSTGRES = False
 
-DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "viaticos.db")
+# En Vercel / AWS Lambda solo /tmp es escribible para SQLite
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    DB_FILE = "/tmp/viaticos.db"
+else:
+    DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "viaticos.db")
 
 
 def get_connection():
     if IS_POSTGRES:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        conn = psycopg2.connect(
+            DATABASE_URL,
+            connect_timeout=10,
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
         return conn
     else:
         conn = sqlite3.connect(DB_FILE)
@@ -94,22 +107,25 @@ def init_db():
     """
     if IS_POSTGRES:
         # En Supabase, verificar si existen las tablas
-        check_user = execute_query(
-            "SELECT to_regclass('public.usuarios') as tbl",
-            fetch="one"
-        )
-        if not check_user or not check_user.get("tbl"):
-            schema_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema_supabase.sql")
-            if os.path.exists(schema_file):
-                with open(schema_file, "r", encoding="utf-8") as f:
-                    sql_content = f.read()
-                conn = get_connection()
-                try:
-                    cur = conn.cursor()
-                    cur.execute(sql_content)
-                    conn.commit()
-                finally:
-                    conn.close()
+        try:
+            check_user = execute_query(
+                "SELECT to_regclass('public.usuarios') as tbl",
+                fetch="one"
+            )
+            if not check_user or not check_user.get("tbl"):
+                schema_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema_supabase.sql")
+                if os.path.exists(schema_file):
+                    with open(schema_file, "r", encoding="utf-8") as f:
+                        sql_content = f.read()
+                    conn = get_connection()
+                    try:
+                        cur = conn.cursor()
+                        cur.execute(sql_content)
+                        conn.commit()
+                    finally:
+                        conn.close()
+        except Exception as e:
+            print(f"[WARN] Error al conectar con Supabase en init_db: {e}")
         return
 
     # Modo SQLite Local

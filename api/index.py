@@ -1,10 +1,12 @@
 import os
 import sys
 
-# Agregar la raíz del proyecto al sys.path para importaciones en Vercel
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Agregar la raíz del proyecto al path
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 from app import app
 
-# Exportar la app para el entorno serverless de Vercel
-app_handler = app
+# Vercel WSGI runner busca 'app'
+handler = app

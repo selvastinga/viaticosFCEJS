@@ -22,8 +22,48 @@ app = Flask(
 )
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "viaticos-unsl-secret-key-2026-auth")
 
-# Asegurar que la base de datos esté inicializada
-database.init_db()
+# Inicialización segura de la base de datos
+try:
+    database.init_db()
+except Exception as e:
+    print(f"[WARN] Error inicializando base de datos en startup: {e}")
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e
+    
+    print(f"[ERROR NO MANEJADO] {e}")
+    error_msg = str(e)
+    
+    # Respuesta amigable en HTML para errores de base de datos o runtime
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Aviso del Sistema - Viáticos UNSL</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh; padding: 20px;">
+  <div class="card p-4 shadow-sm border-0" style="max-width: 580px; border-radius: 12px;">
+    <h4 class="text-danger fw-bold mb-2">⚠️ Error de Conexión a la Base de Datos</h4>
+    <p class="text-muted small mb-3">La aplicación no pudo comunicarse con la base de datos. Detalle técnico:</p>
+    <div class="bg-dark text-white p-3 rounded mb-3" style="font-size: 0.82rem; font-family: monospace; white-space: pre-wrap; word-break: break-all;">{error_msg}</div>
+    <div class="alert alert-warning small mb-3">
+      <strong>Verificación recomendada en Vercel:</strong>
+      <ul class="mb-0 mt-1 ps-3">
+        <li>Comprueba en <em>Project Settings &gt; Environment Variables</em> que <code>DATABASE_URL</code> esté configurada.</li>
+        <li>Si usas Supabase, asegúrate de utilizar la URI del <strong>Connection Pooler</strong> (puerto 6543 o 5432) y que la contraseña sea la correcta.</li>
+        <li>Asegúrate de haber ejecutado el script <code>schema_supabase.sql</code> en el SQL Editor de Supabase.</li>
+      </ul>
+    </div>
+    <a href="/" class="btn btn-primary btn-sm">Volver a intentar</a>
+  </div>
+</body>
+</html>"""
+    return html, 500
 
 
 def login_required(f):
