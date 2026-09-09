@@ -1,0 +1,25 @@
+# Entornos virtuales y dependencias
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Base de datos local SQLite (no subir a GitHub, Supabase gestiona la nube)
+*.db
+viaticos.db
+
+# Variables de entorno secretas
+.env
+.env.local
+
+# Vercel
+.vercel
+
+# Logs y temporales
+*.log
+scratch/
+extracted_img_*
+test_*.pdf
+test_*.xlsx

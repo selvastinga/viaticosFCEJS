@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestión de Viáticos - UNSL</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Navbar Superior -->
+  <header class="navbar-custom py-2 px-3 mb-4">
+    <div class="container-fluid d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-3">
+        <img src="{{ url_for('static', filename='img/unsl_logo.jpg') }}" alt="Escudo UNSL" class="brand-shield bg-white p-1 rounded">
+        <div>
+          <h1 class="h5 mb-0 fw-bold text-white tracking-wide">SISTEMA DE GESTIÓN DE VIÁTICOS</h1>
+          <small class="text-blue-200 opacity-75" id="header-facultad-nombre">Facultad de Ingeniería y Ciencias Agropecuarias / FCEJS - UNSL</small>
+        </div>
+      </div>
+      <div>
+        <ul class="nav nav-pills gap-1" id="mainTabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active" id="tab-alta-btn" data-bs-toggle="tab" data-bs-target="#tab-alta" type="button">
+              <i class="bi bi-file-earmark-plus me-1"></i> Cargar Viático
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tab-listado-btn" data-bs-toggle="tab" data-bs-target="#tab-listado" type="button">
+              <i class="bi bi-card-list me-1"></i> Listado (ABM)
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tab-reportes-btn" data-bs-toggle="tab" data-bs-target="#tab-reportes" type="button">
+              <i class="bi bi-graph-up-arrow me-1"></i> Reportes
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tab-opciones-btn" data-bs-toggle="tab" data-bs-target="#tab-opciones" type="button">
+              <i class="bi bi-sliders me-1"></i> Opciones
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-dark py-2 px-3 border shadow-sm">
+          <i class="bi bi-person-circle text-primary me-1"></i>
+          <b>{{ current_user.username if current_user else 'Usuario' }}</b>
+        </span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm fw-semibold" title="Cerrar Sesión">
+          <i class="bi bi-box-arrow-right me-1"></i> Salir
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-fluid px-4 pb-5">
+    <div class="tab-content" id="mainTabsContent">
+
+      <!-- ==================== PESTAÑA 1: CARGA DE VIÁTICO (ABM) ==================== -->
+      <div class="tab-pane fade show active" id="tab-alta" role="tabpanel">
+        <div class="row justify-content-center">
+          <div class="col-xl-11 col-xxl-10">
+            <div class="abm-container">
+
+              <!-- Encabezado del Formulario (con estilo fiel a pantalla abm) -->
+              <div class="abm-header-panel d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="bg-white p-2 rounded border shadow-sm">
+                    <img src="{{ url_for('static', filename='img/unsl_logo.jpg') }}" alt="Logo" style="height: 42px;">
+                  </div>
+                  <div>
+                    <h2 class="h6 fw-bold mb-0 text-dark text-uppercase" id="form-header-univ">UNIVERSIDAD NACIONAL DE SAN LUIS</h2>
+                    <p class="small text-muted mb-0 fw-semibold text-uppercase" id="form-header-fac">FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS</p>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-4">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold text-secondary small text-uppercase">Nro Viático:</span>
+                    <input type="text" id="nro_viatico" class="form-control form-control-custom fw-bold text-center form-control-highlight" style="width: 100px;" value="00001">
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold text-secondary small text-uppercase">Fecha:</span>
+                    <input type="date" id="fecha" class="form-control form-control-custom" style="width: 155px;">
+                  </div>
+                </div>
+              </div>
+
+              <form id="form-viatico" onsubmit="return false;">
+                <input type="hidden" id="viatico_id" value="">
+
+                <!-- Sección 1: Beneficiario y Cargo -->
+                <div class="abm-section-box">
+                  <div class="abm-section-title">
+                    <i class="bi bi-person-badge text-primary"></i> 1. Datos del Beneficiario y Cargo
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-12">
+                      <label class="form-label form-label-custom">Apellido y Nombre <span class="text-danger">*</span></label>
+                      <input type="text" id="apellido_nombre" class="form-control form-control-custom" placeholder="Ej: GUAYCOCHEA MONICA BEATRIZ" required>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label form-label-custom">Cargo (Código)</label>
+                      <select id="cargo_codigo" class="form-select form-select-custom">
+                        <option value="">-- Seleccionar Cargo --</option>
+                      </select>
+                    </div>
+                    <div class="col-md-8">
+                      <label class="form-label form-label-custom">Denominación Cargo</label>
+                      <input type="text" id="cargo_denominacion" class="form-control form-control-custom" placeholder="Se completará al elegir cargo o ingrese uno...">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sección 2: Fechas, Horas y Días -->
+                <div class="abm-section-box">
+                  <div class="abm-section-title">
+                    <i class="bi bi-calendar-range text-primary"></i> 2. Fechas, Horarios y Duración (Cálculo Diario)
+                  </div>
+                  <div class="row g-3 align-items-end">
+                    <div class="col-md-2 col-sm-6">
+                      <label class="form-label form-label-custom">Cant. Días</label>
+                      <input type="number" step="0.5" min="0" id="cant_dias" class="form-control form-control-custom fw-bold text-center text-primary" value="1.0">
+                      <small class="text-muted d-block" style="font-size: 0.72rem;">(Auto: Hasta - Desde)</small>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                      <label class="form-label form-label-custom">Desde: Fecha</label>
+                      <input type="date" id="fecha_desde" class="form-control form-control-custom">
+                    </div>
+                    <div class="col-md-2 col-sm-6">
+                      <label class="form-label form-label-custom">Hora</label>
+                      <input type="time" id="hora_desde" class="form-control form-control-custom" value="07:00">
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                      <label class="form-label form-label-custom">Hasta: Fecha</label>
+                      <input type="date" id="fecha_hasta" class="form-control form-control-custom">
+                    </div>
+                    <div class="col-md-2 col-sm-6">
+                      <label class="form-label form-label-custom">Hora</label>
+                      <input type="time" id="hora_hasta" class="form-control form-control-custom" value="07:00">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sección 3: Destino y Misión -->
+                <div class="abm-section-box">
+                  <div class="abm-section-title">
+                    <i class="bi bi-geo-alt text-primary"></i> 3. Lugar y Misión del Viaje
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-md-12">
+                      <label class="form-label form-label-custom">Lugar / Destino</label>
+                      <input type="text" id="lugar" class="form-control form-control-custom" placeholder="Ej: San Luis Capital / Mendoza / Buenos Aires">
+                    </div>
+                    <div class="col-md-12">
+                      <label class="form-label form-label-custom">Misión</label>
+                      <input type="text" id="mision" class="form-control form-control-custom" placeholder="Ej: CONGRESO FAUATS / REUNIÓN ACADÉMICA / TAREAS DE CAMPO">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sección 4: Liquidación y Contabilidad (dos columnas lado a lado) -->
+                <div class="row g-3 mb-4">
+                  <!-- Columna Izquierda: Medio de transporte y Montos -->
+                  <div class="col-lg-6">
+                    <div class="abm-section-box h-100">
+                      <div class="abm-section-title">
+                        <i class="bi bi-cash-stack text-success"></i> 4. Liquidación del Viático
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label form-label-custom">Medio de Transporte</label>
+                        <select id="medio_transporte" class="form-select form-select-custom">
+                          <!-- Opciones de transporte dinámicas -->
+                        </select>
+                      </div>
+                      <div class="row g-2 mb-3">
+                        <div class="col-6">
+                          <label class="form-label form-label-custom">Valor Diario ($)</label>
+                          <input type="number" step="0.01" id="valor_diario" class="form-control form-control-custom" value="80000.00">
+                        </div>
+                        <div class="col-6">
+                          <label class="form-label form-label-custom">Importe Total ($)</label>
+                          <input type="number" step="0.01" id="importe_total" class="form-control form-control-custom form-control-highlight text-end" value="0.00" readonly>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="letras-preview" id="preview_letras">
+                          Son: Cero Pesos 00/100
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Columna Derecha: Imputación, Cheque y Expediente -->
+                  <div class="col-lg-6">
+                    <div class="abm-section-box h-100">
+                      <div class="abm-section-title">
+                        <i class="bi bi-bank text-primary"></i> 5. Imputación y Datos Contables
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label form-label-custom">Imputación Presupuestaria</label>
+                        <select id="imputacion" class="form-select form-select-custom">
+                          <!-- Dinámicas -->
+                        </select>
+                      </div>
+                      <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Cheque N°</label>
+                          <input type="text" id="cheque" class="form-control form-control-custom" placeholder="N° de cheque si aplica">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">F. Cheque</label>
+                          <input type="date" id="f_cheque" class="form-control form-control-custom">
+                        </div>
+                      </div>
+                      <div class="row g-2">
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Expediente</label>
+                          <input type="text" id="expediente" class="form-control form-control-custom" placeholder="Ej: EXP-1234/2026">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Estado</label>
+                          <select id="estado" class="form-select form-select-custom fw-semibold">
+                            <option value="Pendiente" selected>Pendiente</option>
+                            <option value="Pagado">Pagado</option>
+                            <option value="Rendido">Rendido</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                  <button type="button" class="btn btn-outline-secondary px-4" id="btn-limpiar">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar / Nuevo
+                  </button>
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary px-4 fw-semibold" id="btn-guardar">
+                      <i class="bi bi-check2-circle me-1"></i> Guardar Viático
+                    </button>
+                    <button type="button" class="btn btn-success px-4 fw-semibold" id="btn-guardar-imprimir">
+                      <i class="bi bi-file-earmark-pdf me-1"></i> Guardar e Imprimir (A4)
+                    </button>
+                  </div>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PESTAÑA 2: LISTADO DE VIÁTICOS (ABM) ==================== -->
+      <div class="tab-pane fade" id="tab-listado" role="tabpanel">
+        <div class="card card-custom">
+          <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="fw-bold fs-6"><i class="bi bi-list-task me-1 text-primary"></i> Solicitudes y Liquidaciones Registradas</span>
+            <button class="btn btn-primary btn-sm" id="btn-ir-nuevo">
+              <i class="bi bi-plus-lg me-1"></i> Nueva Solicitud
+            </button>
+          </div>
+          <div class="card-body">
+
+            <!-- Barra de Filtros -->
+            <div class="row g-2 mb-3 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Buscar (Nombre, Nro, Misión, Exp)</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" id="filtro-busqueda" class="form-control" placeholder="Buscar texto...">
+                </div>
+              </div>
+              <div class="col-md-2 col-sm-6">
+                <label class="form-label small text-muted mb-1">Fecha Desde</label>
+                <input type="date" id="filtro-fecha-desde" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-2 col-sm-6">
+                <label class="form-label small text-muted mb-1">Fecha Hasta</label>
+                <input type="date" id="filtro-fecha-hasta" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-2 col-sm-6">
+                <label class="form-label small text-muted mb-1">Estado</label>
+                <select id="filtro-estado" class="form-select form-select-sm">
+                  <option value="Todos">Todos</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Pagado">Pagado</option>
+                  <option value="Rendido">Rendido</option>
+                </select>
+              </div>
+              <div class="col-md-2 col-sm-6">
+                <label class="form-label small text-muted mb-1">Imputación</label>
+                <select id="filtro-imputacion" class="form-select form-select-sm">
+                  <option value="Todas">Todas</option>
+                </select>
+              </div>
+              <div class="col-md-1">
+                <button class="btn btn-outline-secondary btn-sm w-100" id="btn-limpiar-filtros" title="Restablecer filtros">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tabla de Viáticos -->
+            <div class="table-responsive">
+              <table class="table table-hover table-custom" id="tabla-viaticos">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Fecha</th>
+                    <th>Beneficiario</th>
+                    <th>Cargo</th>
+                    <th>Período de Viaje</th>
+                    <th class="text-center">Días</th>
+                    <th class="text-end">Total Liquidado</th>
+                    <th>Imputación</th>
+                    <th>Cheque / Exp</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center" style="width: 140px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-viaticos-body">
+                  <tr>
+                    <td colspan="11" class="text-center py-4 text-muted">Cargando datos...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PESTAÑA 3: REPORTES ==================== -->
+      <div class="tab-pane fade" id="tab-reportes" role="tabpanel">
+        <div class="card card-custom mb-4">
+          <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="fw-bold fs-6"><i class="bi bi-pie-chart-fill me-1 text-primary"></i> Filtros y Resumen de Reportes</span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-danger btn-sm" id="btn-exportar-pdf">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar a PDF
+              </button>
+              <button class="btn btn-success btn-sm" id="btn-exportar-excel">
+                <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar a Excel
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Filtros de Reporte -->
+            <div class="row g-2 mb-4 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Período Desde</label>
+                <input type="date" id="rep-fecha-desde" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Período Hasta</label>
+                <input type="date" id="rep-fecha-hasta" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Estado de Viático</label>
+                <select id="rep-estado" class="form-select form-select-sm">
+                  <option value="Todos">Todos los Estados</option>
+                  <option value="Pendiente">Solo Pendientes</option>
+                  <option value="Pagado">Solo Pagados</option>
+                  <option value="Rendido">Solo Rendidos</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Imputación</label>
+                <select id="rep-imputacion" class="form-select form-select-sm">
+                  <option value="Todas">Todas las Imputaciones</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Tarjetas KPI -->
+            <div class="row g-3 mb-4">
+              <div class="col-xl-3 col-sm-6">
+                <div class="kpi-card">
+                  <div class="kpi-icon blue"><i class="bi bi-cash"></i></div>
+                  <div>
+                    <div class="kpi-val" id="kpi-total-monto">$ 0,00</div>
+                    <div class="kpi-lbl">Total Liquidado (<span id="kpi-total-cant">0</span>)</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-sm-6">
+                <div class="kpi-card">
+                  <div class="kpi-icon yellow"><i class="bi bi-hourglass-split"></i></div>
+                  <div>
+                    <div class="kpi-val" id="kpi-pend-monto">$ 0,00</div>
+                    <div class="kpi-lbl">Pendientes (<span id="kpi-pend-cant">0</span>)</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-sm-6">
+                <div class="kpi-card">
+                  <div class="kpi-icon green"><i class="bi bi-check-circle"></i></div>
+                  <div>
+                    <div class="kpi-val" id="kpi-pag-monto">$ 0,00</div>
+                    <div class="kpi-lbl">Pagados (<span id="kpi-pag-cant">0</span>)</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-sm-6">
+                <div class="kpi-card">
+                  <div class="kpi-icon purple"><i class="bi bi-archive"></i></div>
+                  <div>
+                    <div class="kpi-val" id="kpi-rend-monto">$ 0,00</div>
+                    <div class="kpi-lbl">Rendidos (<span id="kpi-rend-cant">0</span>)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Detalle de solicitudes del reporte -->
+            <div class="table-responsive">
+              <table class="table table-hover table-custom">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Fecha</th>
+                    <th>Beneficiario</th>
+                    <th>Cargo</th>
+                    <th>Salida - Regreso</th>
+                    <th class="text-center">Días</th>
+                    <th class="text-end">Monto Total</th>
+                    <th>Imputación</th>
+                    <th>Cheque</th>
+                    <th class="text-center">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-reporte-body">
+                  <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">Seleccione los filtros para visualizar el reporte</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PESTAÑA 4: OPCIONES Y TABLAS MAESTRAS ==================== -->
+      <div class="tab-pane fade" id="tab-opciones" role="tabpanel">
+        <div class="row g-4">
+
+          <!-- Sub-pestañas o acordeón de opciones -->
+          <div class="col-lg-3">
+            <div class="card card-custom">
+              <div class="list-group list-group-flush rounded-3" id="opciones-subtabs" role="tablist">
+                <button class="list-group-item list-group-item-action active py-3" data-bs-toggle="list" data-bs-target="#subtab-cargos">
+                  <i class="bi bi-person-workspace me-2 text-primary"></i> <b>Cargos y Valores Diarios</b>
+                  <div class="small text-muted">Valores según opciones.pdf</div>
+                </button>
+                <button class="list-group-item list-group-item-action py-3" data-bs-toggle="list" data-bs-target="#subtab-transportes">
+                  <i class="bi bi-truck me-2 text-primary"></i> <b>Medios de Transporte</b>
+                  <div class="small text-muted">Terrestre, Aéreo, etc.</div>
+                </button>
+                <button class="list-group-item list-group-item-action py-3" data-bs-toggle="list" data-bs-target="#subtab-imputaciones">
+                  <i class="bi bi-diagram-3 me-2 text-primary"></i> <b>Imputaciones Presupuestarias</b>
+                  <div class="small text-muted">Decanato, Departamentos, etc.</div>
+                </button>
+                <button class="list-group-item list-group-item-action py-3" data-bs-toggle="list" data-bs-target="#subtab-institucional">
+                  <i class="bi bi-building-gear me-2 text-primary"></i> <b>Configuración y Firmas</b>
+                  <div class="small text-muted">Facultad, Decano, Autoridades</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-9">
+            <div class="tab-content" id="subtabsContent">
+
+              <!-- Subtab 1: Cargos -->
+              <div class="tab-pane fade show active" id="subtab-cargos">
+                <div class="card card-custom">
+                  <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-person-badge text-primary me-1"></i> <b>Cargos y Escala de Viáticos Diarios</b></span>
+                    <button class="btn btn-primary btn-sm" id="btn-nuevo-cargo">
+                      <i class="bi bi-plus-lg me-1"></i> Agregar Cargo
+                    </button>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover table-custom" id="tabla-cargos">
+                        <thead>
+                          <tr>
+                            <th>Código</th>
+                            <th>Nombre Completo del Cargo</th>
+                            <th class="text-end">Valor Diario ($)</th>
+                            <th class="text-center" style="width: 110px;">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tabla-cargos-body">
+                          <!-- Filas dinámicas -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subtab 2: Medios de Transporte -->
+              <div class="tab-pane fade" id="subtab-transportes">
+                <div class="card card-custom">
+                  <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-truck text-primary me-1"></i> <b>Medios de Transporte</b></span>
+                    <div class="d-flex gap-2">
+                      <input type="text" id="nuevo-transporte-nombre" class="form-control form-control-sm" placeholder="Nombre transporte...">
+                      <button class="btn btn-primary btn-sm text-nowrap" id="btn-agregar-transporte">
+                        <i class="bi bi-plus-lg me-1"></i> Agregar
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive" style="max-width: 600px;">
+                      <table class="table table-hover table-custom">
+                        <thead>
+                          <tr>
+                            <th>Medio de Transporte</th>
+                            <th class="text-center" style="width: 90px;">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tabla-transportes-body">
+                          <!-- Dinámico -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subtab 3: Imputaciones -->
+              <div class="tab-pane fade" id="subtab-imputaciones">
+                <div class="card card-custom">
+                  <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-diagram-3 text-primary me-1"></i> <b>Imputaciones Presupuestarias</b></span>
+                    <div class="d-flex gap-2">
+                      <input type="text" id="nueva-imputacion-nombre" class="form-control form-control-sm" placeholder="Nombre imputación...">
+                      <button class="btn btn-primary btn-sm text-nowrap" id="btn-agregar-imputacion">
+                        <i class="bi bi-plus-lg me-1"></i> Agregar
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive" style="max-width: 700px;">
+                      <table class="table table-hover table-custom">
+                        <thead>
+                          <tr>
+                            <th>Imputación Presupuestaria</th>
+                            <th class="text-center" style="width: 90px;">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tabla-imputaciones-body">
+                          <!-- Dinámico -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subtab 4: Configuración Institucional y Autoridades Firmantes -->
+              <div class="tab-pane fade" id="subtab-institucional">
+                <div class="card card-custom">
+                  <div class="card-header card-header-custom">
+                    <i class="bi bi-building-gear text-primary me-1"></i> <b>Identidad Institucional y Autoridades Firmantes del PDF</b>
+                  </div>
+                  <div class="card-body">
+                    <form id="form-config" onsubmit="return false;">
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Universidad</label>
+                          <input type="text" id="cfg-universidad" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Facultad</label>
+                          <div class="input-group">
+                            <input type="text" id="cfg-facultad" class="form-control form-control-custom">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">Opciones</button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                              <li><a class="dropdown-item" href="javascript:void(0)" onclick="setFacultadPreset('FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS')">Facultad de Ingeniería y Cs Agropecuarias (FICA)</a></li>
+                              <li><a class="dropdown-item" href="javascript:void(0)" onclick="setFacultadPreset('FACULTAD DE CIENCIAS ECONOMICAS JURIDICAS Y SOCIALES')">Facultad de Ciencias Económicas, Jurídicas y Sociales (FCEJS)</a></li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div class="col-md-12">
+                          <label class="form-label form-label-custom">Leyenda / Normativa Aplicable</label>
+                          <input type="text" id="cfg-normativa" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Ciudad</label>
+                          <input type="text" id="cfg-ciudad" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Valor Dólar Referencia (opciones.pdf)</label>
+                          <input type="number" step="0.01" id="cfg-valor-dolar" class="form-control form-control-custom">
+                        </div>
+                      </div>
+
+                      <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">Firmas Oficiales que aparecen en el PDF (salida.pdf)</h6>
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Director Financiero (Nombre)</label>
+                          <input type="text" id="cfg-director-financiero" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Cargo (Etiqueta)</label>
+                          <input type="text" id="cfg-cargo-dir-financiero" class="form-control form-control-custom">
+                        </div>
+
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Secretario Administrativo (Nombre)</label>
+                          <input type="text" id="cfg-secretario-administrativo" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Cargo (Etiqueta)</label>
+                          <input type="text" id="cfg-cargo-sec-administrativo" class="form-control form-control-custom">
+                        </div>
+
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Decano / Autoridad Máxima (Nombre)</label>
+                          <input type="text" id="cfg-decano" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Cargo (Etiqueta)</label>
+                          <input type="text" id="cfg-cargo-decano" class="form-control form-control-custom">
+                        </div>
+
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Director Económico-Financiero (Nombre)</label>
+                          <input type="text" id="cfg-director-economico" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label form-label-custom">Cargo (Etiqueta)</label>
+                          <input type="text" id="cfg-cargo-dir-economico" class="form-control form-control-custom">
+                        </div>
+                      </div>
+
+                      <div class="text-end">
+                        <button type="button" class="btn btn-primary px-4 fw-semibold" id="btn-guardar-config">
+                          <i class="bi bi-save me-1"></i> Guardar Cambios de Configuración
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==================== MODALES ==================== -->
+
+  <!-- Modal Editar Cargo -->
+  <div class="modal fade" id="modalCargo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalCargoTitle">Agregar / Modificar Cargo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="modal-cargo-id">
+          <div class="mb-3">
+            <label class="form-label form-label-custom">Código de Cargo (ej: ADE, 2SE, SEC)</label>
+            <input type="text" id="modal-cargo-codigo" class="form-control form-control-custom text-uppercase">
+          </div>
+          <div class="mb-3">
+            <label class="form-label form-label-custom">Nombre Completo de la Denominación</label>
+            <input type="text" id="modal-cargo-nombre" class="form-control form-control-custom" placeholder="Ej: Profesor Adjunto Exclusivo">
+          </div>
+          <div class="mb-3">
+            <label class="form-label form-label-custom">Valor Diario del Viático ($)</label>
+            <input type="number" step="0.01" id="modal-cargo-valor" class="form-control form-control-custom" value="80000.00">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-guardar-modal-cargo">Guardar Cargo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cambiar Estado -->
+  <div class="modal fade" id="modalEstado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Actualizar Estado del Viático</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="modal-estado-id">
+          <div class="mb-3">
+            <label class="form-label form-label-custom">Nuevo Estado</label>
+            <select id="modal-estado-select" class="form-select form-select-custom">
+              <option value="Pendiente">Pendiente</option>
+              <option value="Pagado">Pagado</option>
+              <option value="Rendido">Rendido</option>
+            </select>
+          </div>
+          <div id="modal-estado-pago-fields">
+            <div class="mb-3">
+              <label class="form-label form-label-custom">N° de Cheque (Opcional)</label>
+              <input type="text" id="modal-estado-cheque" class="form-control form-control-custom" placeholder="Ej: CHQ-98741">
+            </div>
+            <div class="mb-3">
+              <label class="form-label form-label-custom">Fecha de Pago / Cheque</label>
+              <input type="date" id="modal-estado-fcheque" class="form-control form-control-custom">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-guardar-modal-estado">Actualizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Visor PDF -->
+  <div class="modal fade" id="modalPDF" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="height: 90vh;">
+      <div class="modal-content h-100">
+        <div class="modal-header py-2">
+          <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-file-earmark-pdf text-danger me-1"></i> Formato de Impresión Oficial (A4)</h5>
+          <div class="d-flex align-items-center gap-2">
+            <a href="#" id="modal-pdf-download-link" class="btn btn-outline-primary btn-sm" target="_blank" download>
+              <i class="bi bi-download me-1"></i> Descargar PDF
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="modal-body p-0 h-100">
+          <iframe id="modal-pdf-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom Application JS -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
