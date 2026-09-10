@@ -149,6 +149,25 @@ class ViaticosAuthSystemTestCase(unittest.TestCase):
         res_del = self.client.delete(f"/api/viaticos/{v_id}")
         self.assertEqual(res_del.status_code, 200)
 
+    def test_04_no_bucle_redireccion_y_rutas_vercel(self):
+        """Verifica que /login devuelve 200 y no entra en bucle infinito incluso con cabeceras de Vercel"""
+        # 1. /login directo debe responder 200 OK
+        res_login = self.client.get("/login")
+        self.assertEqual(res_login.status_code, 200)
+        self.assertIn("Iniciar Sesión", res_login.text)
+
+        # 2. Simulación de petición Vercel con HTTP_X_MATCHED_PATH='/' y PATH_INFO='/login'
+        environ_headers = {"HTTP_X_MATCHED_PATH": "/"}
+        res_vercel = self.client.get("/login", environ_base=environ_headers)
+        self.assertEqual(res_vercel.status_code, 200)
+        self.assertIn("Iniciar Sesión", res_vercel.data.decode("utf-8"))
+
+        # 3. Petición a raíz sin login redirige a /login limpiamente
+        res_root = self.client.get("/", environ_base=environ_headers)
+        self.assertEqual(res_root.status_code, 302)
+        self.assertEqual(res_root.headers.get("Location"), "/login")
+
 
 if __name__ == "__main__":
     unittest.main()
+

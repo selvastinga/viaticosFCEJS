@@ -66,32 +66,30 @@ def handle_exception(e):
     return html, 500
 
 
-class VercelPathMiddleware:
+class VercelPathFixer:
     """
-    Middleware WSGI para corregir las rutas cuando Vercel reescribe /(.*) a /api/index.py.
-    Restaura el path original solicitado en HTTP_X_MATCHED_PATH para que Flask no devuelva 404.
+    Middleware WSGI para normalizar rutas en Vercel Serverless.
+    Si la ruta recibida empieza con /api/index.py o /api/index, elimina el prefijo.
+    No utiliza HTTP_X_MATCHED_PATH ya que en rewrites de Vercel siempre apunta a la raíz '/'
+    provocando bucles de redirección infinitos.
     """
     def __init__(self, wsgi_app):
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        matched_path = environ.get("HTTP_X_MATCHED_PATH")
-        if matched_path:
-            environ["PATH_INFO"] = matched_path
-        else:
-            path = environ.get("PATH_INFO", "")
-            if path in ("/api/index.py", "/api/index", "/api"):
-                environ["PATH_INFO"] = "/"
-            elif path.startswith("/api/index.py/"):
-                environ["PATH_INFO"] = path[len("/api/index.py"):]
-            elif path.startswith("/api/index/"):
-                environ["PATH_INFO"] = path[len("/api/index"):]
+        path = environ.get("PATH_INFO", "")
+        if path.startswith("/api/index.py"):
+            new_path = path[len("/api/index.py"):]
+            environ["PATH_INFO"] = new_path if new_path else "/"
+        elif path.startswith("/api/index"):
+            new_path = path[len("/api/index"):]
+            environ["PATH_INFO"] = new_path if new_path else "/"
 
         return self.wsgi_app(environ, start_response)
 
 
-# Aplicar middleware de rutas de Vercel
-app.wsgi_app = VercelPathMiddleware(app.wsgi_app)
+# Aplicar normalizador de rutas para Vercel
+app.wsgi_app = VercelPathFixer(app.wsgi_app)
 
 
 def login_required(f):
@@ -101,8 +99,17 @@ def login_required(f):
             # Si es una petición API, devolver 401 Unauthorized
             if request.path.startswith("/api/"):
                 return jsonify({"error": "No autorizado. Inicie sesión."}), 401
-            # Si es petición web, redirigir a login
-            return redirect(url_for("login", next=request.url))
+            # Si ya está en la pantalla de login, no redirigir en bucle
+            if request.path == "/login":
+                return f(*args, **kwargs)
+            # Para la raíz, redirigir a login de forma limpia sin parámetros innecesarios
+            if request.path == "/":
+                return redirect(url_for("login"))
+            # Prevenir bucles de redirección con parámetros next anidados
+            query = request.query_string.decode("utf-8", errors="ignore")
+            if "next=" in query:
+                return redirect(url_for("login"))
+            return redirect(url_for("login", next=request.path))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -135,7 +142,7 @@ def login():
             session["nombre_completo"] = user["nombre_completo"]
             
             next_page = request.args.get("next")
-            if next_page and next_page.startswith("/"):
+            if next_page and next_page.startswith("/") and not next_page.startswith("/login"):
                 return redirect(next_page)
             return redirect(url_for("index"))
         else:
