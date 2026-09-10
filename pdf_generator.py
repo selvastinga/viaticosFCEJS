@@ -273,22 +273,25 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     c.setFont("Helvetica", 8)
     c.drawString(290, y_info, viatico.get("hora_hasta") or "")
     
-    # Fila 5: Misión y Destino
+    # Fila 5: Destino (arriba de Misión)
+    y_info -= 14
+    c.setFont("Helvetica", 7.5)
+    c.drawString(45, y_info, "Destino:")
+    c.setFont("Helvetica", 8)
+    lugar = (viatico.get("lugar") or "").strip()
+    if lugar.lower().startswith("destino:"):
+        lugar = lugar[len("destino:"):].strip()
+    c.drawString(130, y_info, lugar[:85])
+    
+    # Fila 6: Misión
     y_info -= 14
     c.setFont("Helvetica", 7.5)
     c.drawString(45, y_info, "Misión:")
     c.setFont("Helvetica", 8)
-    lugar = (viatico.get("lugar") or "").strip()
     mision = (viatico.get("mision") or "").strip()
-    if lugar:
-        destino_texto = lugar if lugar.lower().startswith("destino:") else f"Destino: {lugar}"
-        if mision:
-            mision_completa = f"{mision} - {destino_texto}"
-        else:
-            mision_completa = destino_texto
-    else:
-        mision_completa = mision
-    c.drawString(130, y_info, mision_completa[:85])
+    if mision.lower().startswith("misión:") or mision.lower().startswith("mision:"):
+        mision = mision.split(":", 1)[1].strip()
+    c.drawString(130, y_info, mision[:85])
     
     # Fila 6: Duración
     y_info -= 14
