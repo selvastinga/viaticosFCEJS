@@ -66,32 +66,6 @@ def handle_exception(e):
     return html, 500
 
 
-class VercelPathFixer:
-    """
-    Middleware WSGI para normalizar rutas en Vercel Serverless.
-    Si la ruta recibida empieza con /api/index.py o /api/index, elimina el prefijo.
-    No utiliza HTTP_X_MATCHED_PATH ya que en rewrites de Vercel siempre apunta a la raíz '/'
-    provocando bucles de redirección infinitos.
-    """
-    def __init__(self, wsgi_app):
-        self.wsgi_app = wsgi_app
-
-    def __call__(self, environ, start_response):
-        path = environ.get("PATH_INFO", "")
-        if path.startswith("/api/index.py"):
-            new_path = path[len("/api/index.py"):]
-            environ["PATH_INFO"] = new_path if new_path else "/"
-        elif path.startswith("/api/index"):
-            new_path = path[len("/api/index"):]
-            environ["PATH_INFO"] = new_path if new_path else "/"
-
-        return self.wsgi_app(environ, start_response)
-
-
-# Aplicar normalizador de rutas para Vercel
-app.wsgi_app = VercelPathFixer(app.wsgi_app)
-
-
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -112,15 +86,6 @@ def login_required(f):
             return redirect(url_for("login", next=request.path))
         return f(*args, **kwargs)
     return decorated_function
-
-
-# Ruta fallback de seguridad para Vercel
-@app.route("/api/index.py")
-@app.route("/api/index")
-def vercel_entry_fallback():
-    if "user_id" in session:
-        return redirect(url_for("index"))
-    return redirect(url_for("login"))
 
 
 # ------------------ AUTENTICACIÓN (LOGIN / LOGOUT) ------------------
