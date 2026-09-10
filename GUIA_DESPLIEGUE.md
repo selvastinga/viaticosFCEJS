@@ -1,5 +1,5 @@
 # Guía Paso a Paso: Despliegue en Supabase y Vercel
-**Sistema de Gestión de Viáticos (FICA / FCEJS - UNSL)**
+**Sistema de Gestión de Viáticos (FCEJS - UNSL)**
 
 Esta guía explica detalladamente cómo publicar la aplicación en internet utilizando **Supabase** como base de datos PostgreSQL en la nube y **Vercel** como servidor de hosting serverless gratuito.
 

@@ -1,10 +1,10 @@
 @echo off
 setlocal
-title Sistema de Gestion de Viaticos - UNSL (FICA / FCEJS)
+title Sistema de Gestion de Viaticos - UNSL (FCEJS)
 
 echo =====================================================================
 echo       SISTEMA DE GESTION DE VIATICOS - UNIVERSIDAD NACIONAL DE SAN LUIS
-echo       Facultad de Ingenieria y Ciencias Agropecuarias / FCEJS
+echo       Facultad de Ciencias Economicas, Juridicas y Sociales (FCEJS)
 echo =====================================================================
 echo.
 echo Detectando entorno de Python...

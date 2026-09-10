@@ -94,7 +94,7 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     c.setFont("Helvetica", 11)
     c.setFillColor(colors.black)
     univ_nombre = config.get("universidad", "UNIVERSIDAD NACIONAL DE SAN LUIS")
-    fac_nombre = config.get("facultad", "FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS")
+    fac_nombre = config.get("facultad", "FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES")
     c.drawCentredString(300, 778, univ_nombre)
     c.setFont("Helvetica", 10)
     c.drawCentredString(300, 763, fac_nombre)
@@ -374,7 +374,7 @@ def generar_pdf_reporte(metricas: dict, viaticos: list, config: dict, filtros: d
     
     # Encabezado institucional
     univ = config.get("universidad", "UNIVERSIDAD NACIONAL DE SAN LUIS")
-    fac = config.get("facultad", "FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS")
+    fac = config.get("facultad", "FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES")
     elements.append(Paragraph(univ, title_style))
     elements.append(Paragraph(fac, sub_style))
     elements.append(Spacer(1, 4))

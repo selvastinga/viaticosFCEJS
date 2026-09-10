@@ -1,6 +1,6 @@
 /**
  * Lógica Cliente del Sistema de Gestión de Viáticos
- * FICA / FCEJS - Universidad Nacional de San Luis
+ * FCEJS - Universidad Nacional de San Luis
  */
 
 // Estado Global
@@ -72,7 +72,7 @@ async function cargarDatosIniciales() {
 
 function actualizarEncabezadosInstitucionales() {
   const univ = state.configuracion.universidad || "UNIVERSIDAD NACIONAL DE SAN LUIS";
-  const fac = state.configuracion.facultad || "FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS";
+  const fac = state.configuracion.facultad || "FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES";
   
   const hFac = document.getElementById("header-facultad-nombre");
   if (hFac) hFac.textContent = fac;
@@ -849,7 +849,7 @@ async function eliminarImputacion(id) {
 function cargarFormConfiguracion() {
   const c = state.configuracion || {};
   document.getElementById("cfg-universidad").value = c.universidad || "UNIVERSIDAD NACIONAL DE SAN LUIS";
-  document.getElementById("cfg-facultad").value = c.facultad || "FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS";
+  document.getElementById("cfg-facultad").value = c.facultad || "FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES";
   document.getElementById("cfg-normativa").value = c.normativa || "";
   document.getElementById("cfg-ciudad").value = c.ciudad || "Villa Mercedes (SL)";
   document.getElementById("cfg-valor-dolar").value = c.valor_dolar || 1515;

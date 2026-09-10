@@ -1,6 +1,6 @@
 """
 Aplicación Principal Flask - Sistema de Gestión de Viáticos
-Facultad de Ingeniería y Ciencias Agropecuarias / FCEJS - UNSL
+Facultad de Ciencias Económicas, Jurídicas y Sociales (FCEJS) - UNSL
 Con autenticación de usuarios y protección de rutas.
 """
 import os

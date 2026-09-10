@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 CREATE TABLE IF NOT EXISTS configuracion (
     id INT PRIMARY KEY,
     universidad VARCHAR(255) NOT NULL DEFAULT 'UNIVERSIDAD NACIONAL DE SAN LUIS',
-    facultad VARCHAR(255) NOT NULL DEFAULT 'FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS',
+    facultad VARCHAR(255) NOT NULL DEFAULT 'FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES',
     normativa TEXT NOT NULL DEFAULT 'Según Decreto Nacional Nro 865/93 y de acuerdo a RR 139/09, la cual en su Anexo II estipula los montos a abonar en concepto de viatico diario, le corresponde un importe de:',
     director_financiero VARCHAR(255) NOT NULL DEFAULT 'Tec. Carina Roxana Velazquez',
     cargo_dir_financiero VARCHAR(255) NOT NULL DEFAULT 'Director Financiero',
@@ -105,7 +105,7 @@ INSERT INTO configuracion (
 ) VALUES (
     1,
     'UNIVERSIDAD NACIONAL DE SAN LUIS',
-    'FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS',
+    'FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES',
     'Según Decreto Nacional Nro 865/93 y de acuerdo a RR 139/09, la cual en su Anexo II estipula los montos a abonar en concepto de viatico diario, le corresponde un importe de:',
     'Tec. Carina Roxana Velazquez', 'Director Financiero',
     'Esp. Joaquin Flores', 'Secretario Administrativo',
@@ -113,6 +113,9 @@ INSERT INTO configuracion (
     'Tec. Carina Roxana Velazquez', 'Director Económico- Fciero',
     'Villa Mercedes (SL)', 1515.0
 ) ON CONFLICT (id) DO NOTHING;
+
+-- Asegurar actualización en bases ya creadas
+UPDATE configuracion SET facultad = 'FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES' WHERE facultad LIKE '%INGENIER%';
 
 -- C. 30 Cargos oficiales de opciones.pdf
 INSERT INTO cargos (codigo, nombre, valor_diario, activo) VALUES
@@ -162,9 +165,12 @@ INSERT INTO imputaciones (nombre) VALUES
     ('Dpto Cs Economicas'),
     ('Dpto Cs Sociales'),
     ('Dpto Cs Juridico Politicas'),
-    ('Dpto de Ingeniería'),
-    ('Dpto de Ciencias Agropecuarias'),
     ('Secretaría Administrativa'),
     ('Secretaría Académica'),
-    ('Secretaría de Ciencia y Técnica')
+    ('Secretaría de Ciencia y Técnica'),
+    ('Secretaría de Extensión'),
+    ('Secretaría de Posgrado')
 ON CONFLICT (nombre) DO NOTHING;
+
+-- Limpiar imputaciones de otra facultad si existen
+DELETE FROM imputaciones WHERE nombre IN ('Dpto de Ingeniería', 'Dpto de Ciencias Agropecuarias');

@@ -48,7 +48,7 @@ def generar_excel_reporte(metricas: dict, viaticos: list, config: dict, filtros:
     
     # 1. Encabezado Institucional
     univ = config.get("universidad", "UNIVERSIDAD NACIONAL DE SAN LUIS")
-    fac = config.get("facultad", "FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS")
+    fac = config.get("facultad", "FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES")
     
     ws.merge_cells("A1:K1")
     ws["A1"] = univ

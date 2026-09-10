@@ -1,6 +1,6 @@
 """
 Capa de base de datos dual: PostgreSQL (Supabase) / SQLite (Local)
-Para el Sistema de Gestión de Viáticos (FICA / FCEJS - UNSL).
+Para el Sistema de Gestión de Viáticos (FCEJS - UNSL).
 """
 import os
 import re
@@ -147,7 +147,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS configuracion (
                 id INTEGER PRIMARY KEY,
                 universidad TEXT NOT NULL DEFAULT 'UNIVERSIDAD NACIONAL DE SAN LUIS',
-                facultad TEXT NOT NULL DEFAULT 'FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS',
+                facultad TEXT NOT NULL DEFAULT 'FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES',
                 normativa TEXT NOT NULL DEFAULT 'Según Decreto Nacional Nro 865/93 y de acuerdo a RR 139/09, la cual en su Anexo II estipula los montos a abonar en concepto de viatico diario, le corresponde un importe de:',
                 director_financiero TEXT NOT NULL DEFAULT 'Tec. Carina Roxana Velazquez',
                 cargo_dir_financiero TEXT NOT NULL DEFAULT 'Director Financiero',
@@ -241,7 +241,7 @@ def init_db():
                 ) VALUES (
                     1,
                     'UNIVERSIDAD NACIONAL DE SAN LUIS',
-                    'FACULTAD DE INGENIERÍA Y CIENCIAS AGROPECUARIAS',
+                    'FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES',
                     'Según Decreto Nacional Nro 865/93 y de acuerdo a RR 139/09, la cual en su Anexo II estipula los montos a abonar en concepto de viatico diario, le corresponde un importe de:',
                     'Tec. Carina Roxana Velazquez', 'Director Financiero',
                     'Esp. Joaquin Flores', 'Secretario Administrativo',
@@ -250,6 +250,9 @@ def init_db():
                     'Villa Mercedes (SL)', 1515.0
                 )
             """)
+        else:
+            # Asegurar que en bases de datos existentes se actualice el nombre de la facultad
+            cursor.execute(adapt_sql("UPDATE configuracion SET facultad = 'FACULTAD DE CIENCIAS ECONÓMICAS, JURÍDICAS Y SOCIALES' WHERE facultad LIKE '%INGENIER%' OR facultad LIKE '%ECONOMICAS%'"))
 
         # Cargos iniciales
         cursor.execute("SELECT COUNT(*) FROM cargos")
@@ -298,11 +301,14 @@ def init_db():
         if cursor.fetchone()[0] == 0:
             imputaciones_iniciales = [
                 ("Decanato",), ("Dpto Cs Economicas",), ("Dpto Cs Sociales",),
-                ("Dpto Cs Juridico Politicas",), ("Dpto de Ingeniería",),
-                ("Dpto de Ciencias Agropecuarias",), ("Secretaría Administrativa",),
-                ("Secretaría Académica",), ("Secretaría de Ciencia y Técnica",)
+                ("Dpto Cs Juridico Politicas",), ("Secretaría Administrativa",),
+                ("Secretaría Académica",), ("Secretaría de Ciencia y Técnica",),
+                ("Secretaría de Extensión",), ("Secretaría de Posgrado",)
             ]
             cursor.executemany("INSERT INTO imputaciones (nombre) VALUES (?)", imputaciones_iniciales)
+        else:
+            # Eliminar imputaciones correspondientes a otra facultad
+            cursor.execute(adapt_sql("DELETE FROM imputaciones WHERE nombre IN ('Dpto de Ingeniería', 'Dpto de Ciencias Agropecuarias')"))
 
         conn.commit()
     finally:

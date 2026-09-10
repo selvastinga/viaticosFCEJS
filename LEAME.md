@@ -1,5 +1,5 @@
 # Sistema de Gestión de Viáticos
-**Facultad de Ingeniería y Ciencias Agropecuarias (FICA) / FCEJS**  
+**Facultad de Ciencias Económicas, Jurídicas y Sociales (FCEJS)**  
 *Universidad Nacional de San Luis*
 
 Aplicación para la gestión integral de viáticos (Alta, Baja, Modificación), cálculo automático de liquidaciones diarias, generación de planilla oficial A4 idéntica al modelo institucional, administración de tablas maestras y reportes estadísticos.
@@ -67,7 +67,7 @@ El sistema cuenta con control de acceso por usuario y contraseña. Solo los usua
 - **Medios de Transporte**: Terrestre, Aéreo, Vehículo Oficial, etc. (agregar o eliminar).
 - **Imputaciones Presupuestarias**: Decanato, Departamentos académicos y Secretarías.
 - **Configuración y Firmas**:
-  - Nombre de la Facultad (FICA / FCEJS o personalizado).
+  - Nombre de la Facultad (FCEJS o personalizado).
   - Universidad y normativa legal aplicable.
   - Autoridades firmantes del PDF (Director Financiero, Secretario Administrativo, Decano, Director Económico).
   - Ciudad y valor de referencia del dólar.
