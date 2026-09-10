@@ -119,6 +119,9 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     y_sec1 = 718
     draw_section_banner(c, y_sec1, "INTERVENCIÓN DE LA SECRETARÍA ADMINISTRATIVA DE LA FACULTAD")
     
+    val_diario_num = float(viatico.get("valor_diario") or 0.0)
+    val_diario_fmt = utils.formato_moneda(val_diario_num)
+
     # Texto normativa en 2 líneas
     c.setFont("Helvetica", 8)
     linea1 = "Según Decreto Nacional Nro 865/93 y de acuerdo a RR 139/09, la cual en su Anexo II estipula los montos"
@@ -126,10 +129,10 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     c.drawString(45, y_sec1 - 18, linea1)
     c.drawString(45, y_sec1 - 29, linea2)
     
-    val_diario_num = float(viatico.get("valor_diario") or 0.0)
-    val_diario_sin_signo = f"{val_diario_num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    c.setFont("Helvetica", 8)
-    c.drawRightString(PAGE_WIDTH - 45, y_sec1 - 29, val_diario_sin_signo)
+    # Monto inmediatamente después de "de:" con el signo $ adelante del número
+    ancho_l2 = c.stringWidth(linea2, "Helvetica", 8)
+    c.setFont("Helvetica-Bold", 8)
+    c.drawString(45 + ancho_l2 + 4, y_sec1 - 29, val_diario_fmt)
     
     # Subtítulo LIQUIDACIÓN
     c.setFont("Helvetica-Bold", 8.5)
@@ -270,15 +273,22 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     c.setFont("Helvetica", 8)
     c.drawString(290, y_info, viatico.get("hora_hasta") or "")
     
-    # Fila 5: Misión y Lugar
+    # Fila 5: Misión y Destino
     y_info -= 14
     c.setFont("Helvetica", 7.5)
     c.drawString(45, y_info, "Misión:")
     c.setFont("Helvetica", 8)
-    lugar = viatico.get("lugar") or ""
-    mision = viatico.get("mision") or ""
-    mision_completa = f"{mision} - {lugar}" if lugar and lugar not in mision else mision
-    c.drawString(130, y_info, mision_completa[:75])
+    lugar = (viatico.get("lugar") or "").strip()
+    mision = (viatico.get("mision") or "").strip()
+    if lugar:
+        destino_texto = lugar if lugar.lower().startswith("destino:") else f"Destino: {lugar}"
+        if mision:
+            mision_completa = f"{mision} - {destino_texto}"
+        else:
+            mision_completa = destino_texto
+    else:
+        mision_completa = mision
+    c.drawString(130, y_info, mision_completa[:85])
     
     # Fila 6: Duración
     y_info -= 14
