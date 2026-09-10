@@ -155,10 +155,13 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(330, y_sec1 - 62, imp_total_fmt)
     
-    # Líquido a cobrar con guiones punteados
-    c.setFont("Helvetica", 8.5)
-    c.drawString(100, y_sec1 - 85, "LÍQUIDO A COBRAR  -------------------------------------------------------------")
+    # Líquido a cobrar con línea punteada limpia sin tapar el monto
     c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(100, y_sec1 - 85, "LÍQUIDO A COBRAR")
+    c.setDash([2, 3])
+    c.setLineWidth(0.7)
+    c.line(205, y_sec1 - 82, 315, y_sec1 - 82)
+    c.setDash([])
     c.drawString(330, y_sec1 - 85, imp_total_fmt)
     
     # Fecha y Son en letras
@@ -209,7 +212,7 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     chq_num = viatico.get("cheque") or ""
     c.setFont("Helvetica", 8)
     c.drawString(45, y_sec3 - 30, "Efectivo:")
-    c.drawString(410, y_sec3 - 30, f"Cheque Nº   {chq_num}")
+    c.drawString(360, y_sec3 - 30, f"Transferencia Nº   {chq_num}")
     c.drawString(380, y_sec3 - 42, f"{ciudad_str},")
     
     y_firmas3 = 352
@@ -418,8 +421,8 @@ def generar_pdf_reporte(metricas: dict, viaticos: list, config: dict, filtros: d
     elements.append(Spacer(1, 12))
     
     # Tabla detallada de viáticos
-    headers = ["N°", "Fecha", "Beneficiario", "Cargo", "Fechas Viaje", "Días", "Total", "Imputación", "Cheque", "Estado"]
-    col_widths = [32, 45, 110, 65, 75, 25, 55, 60, 40, 48]
+    headers = ["N°", "Fecha", "Beneficiario", "Cargo", "Fechas Viaje", "Días", "Total", "Imputación", "Transferencia", "Estado"]
+    col_widths = [32, 45, 105, 65, 75, 25, 55, 55, 55, 48]
     
     table_rows = [[Paragraph(h, th_style) for h in headers]]
     

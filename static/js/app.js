@@ -369,7 +369,7 @@ async function cargarListadoViaticos() {
     tbody.innerHTML = viaticos.map(v => {
       const badgeClass = v.estado === "Pagado" ? "badge-pagado" : (v.estado === "Rendido" ? "badge-rendido" : "badge-pendiente");
       const fechasViaje = `${formatearFecha(v.fecha_desde)} al ${formatearFecha(v.fecha_hasta)}`;
-      const chequeExp = [v.cheque ? `Chq: ${v.cheque}` : null, v.expediente ? `Exp: ${v.expediente}` : null].filter(Boolean).join(" / ") || "-";
+      const chequeExp = [v.cheque ? `Transf: ${v.cheque}` : null, v.expediente ? `Exp: ${v.expediente}` : null].filter(Boolean).join(" / ") || "-";
 
       return `
         <tr>

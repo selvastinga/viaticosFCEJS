@@ -103,7 +103,7 @@ def generar_excel_reporte(metricas: dict, viaticos: list, config: dict, filtros:
     headers = [
         "N° Viático", "Fecha", "Beneficiario", "Cargo",
         "Salida", "Llegada", "Días", "Valor Diario",
-        "Total Liq.", "Imputación", "N° Cheque", "Expediente", "Estado", "Misión / Destino"
+        "Total Liq.", "Imputación", "N° Transferencia", "Expediente", "Estado", "Misión / Destino"
     ]
     
     row_start = 9
