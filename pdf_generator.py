@@ -213,10 +213,15 @@ def generar_pdf_viatico(viatico: dict, config: dict, output_target) -> None:
     c.drawString(245, y_sec3 - 17, imp_total_fmt)
     
     chq_num = viatico.get("cheque") or ""
+    f_transf = utils.formato_fecha(viatico.get("f_cheque")) or ""
     c.setFont("Helvetica", 8)
     c.drawString(45, y_sec3 - 30, "Efectivo:")
-    c.drawString(360, y_sec3 - 30, f"Transferencia Nº   {chq_num}")
-    c.drawString(380, y_sec3 - 42, f"{ciudad_str},")
+    if f_transf:
+        c.drawString(330, y_sec3 - 30, f"Transferencia Nº: {chq_num}   Fecha: {f_transf}")
+        c.drawString(380, y_sec3 - 42, f"{ciudad_str}, {f_transf}")
+    else:
+        c.drawString(360, y_sec3 - 30, f"Transferencia Nº   {chq_num}")
+        c.drawString(380, y_sec3 - 42, f"{ciudad_str},")
     
     y_firmas3 = 352
     draw_signature_block(
