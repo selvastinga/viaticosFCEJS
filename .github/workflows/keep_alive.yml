@@ -1,0 +1,22 @@
+name: Mantener Supabase Activo (Keep-Alive)
+
+on:
+  schedule:
+    # Se ejecuta los lunes, miércoles y viernes a las 12:00 UTC (cada 2 días aprox.)
+    - cron: '0 12 * * 1,3,5'
+  workflow_dispatch: # Permite dispararlo manualmente en cualquier momento desde GitHub
+
+jobs:
+  ping-keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Keep-Alive a la base de datos
+        run: |
+          echo "Realizando ping al endpoint /api/keepalive..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://viaticos-fcejs.vercel.app/api/keepalive")
+          echo "$RESPONSE"
+          if echo "$RESPONSE" | grep -q "HTTP_STATUS:200"; then
+            echo "✅ Ping exitoso: Base de datos activa y temporizador reiniciado."
+          else
+            echo "⚠️ Aviso: No se obtuvo HTTP 200. Verifique el estado del servidor."
+          fi

@@ -133,6 +133,28 @@ def index():
     }
     return render_template("index.html", current_user=current_user)
 
+# ------------------ KEEPALIVE / HEALTHCHECK (PÚBLICO) ------------------
+@app.route("/api/keepalive", methods=["GET"])
+def api_keepalive():
+    """
+    Endpoint público para mantener activa la base de datos de Supabase y evitar que se pause por inactividad.
+    Ejecuta una consulta liviana a la base de datos para reiniciar el temporizador de 7 días.
+    """
+    try:
+        config = database.get_configuracion()
+        return jsonify({
+            "status": "ok",
+            "message": "Base de datos activa y respondiendo correctamente",
+            "timestamp": datetime.now().isoformat(),
+            "facultad": config.get("facultad", "FCEJS")
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 
 # ------------------ API DATOS INICIALES ------------------
 @app.route("/api/inicial", methods=["GET"])
