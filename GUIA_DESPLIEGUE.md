@@ -99,3 +99,21 @@ Al abrir la URL proporcionada por Vercel, verás la pantalla de inicio de sesió
 - **Base de datos segura y con respaldos**: Todos los viáticos, cargas y reportes quedan permanentemente almacenados en PostgreSQL en Supabase.
 - **Acceso desde cualquier lugar**: Las secretarias y autoridades pueden consultar o autorizar viáticos desde cualquier computadora o dispositivo sin necesidad de instalar nada.
 - **Modo Offline intacto**: Si alguien necesita usar el sistema de forma local en una computadora sin internet, el archivo `iniciar_sistema.bat` sigue funcionando normalmente con la base de datos local SQLite.
+
+---
+
+## ⏰ PASO 5: Evitar que Supabase se pause por inactividad (Gratis)
+
+El plan gratuito de Supabase pausa las bases de datos que pasen **7 días seguidos** sin recibir consultas. Para evitarlo de por vida y sin pagar nada:
+
+1. **GitHub Actions (Ya configurado automáticamente)**:
+   - Se incluye el workflow `.github/workflows/keep_alive.yml` que hace una consulta al endpoint `/api/keepalive` cada 2 días (lunes, miércoles y viernes) para reiniciar el contador de inactividad de Supabase.
+2. **Monitoreo Externo Adicional (Recomendado - 100% Infalible)**:
+   - Ingresa a [cron-job.org](https://cron-job.org) o [uptimerobot.com](https://uptimerobot.com) (ambos gratuitos).
+   - Crea una tarea que haga una petición `GET` a la URL:
+     ```
+     https://viaticos-fcejs.vercel.app/api/keepalive
+     ```
+   - Programa la frecuencia cada **1 o 2 días**.
+   - Esto garantiza que la base de datos nunca se pause, incluso durante vacaciones o recesos universitarios prolongados.
+
