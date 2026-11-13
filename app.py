@@ -134,19 +134,42 @@ def index():
     return render_template("index.html", current_user=current_user)
 
 # ------------------ KEEPALIVE / HEALTHCHECK (PÚBLICO) ------------------
-@app.route("/api/keepalive", methods=["GET"])
+@app.route("/api/keepalive", methods=["GET", "POST"])
 def api_keepalive():
     """
     Endpoint público para mantener activa la base de datos de Supabase y evitar que se pause por inactividad.
-    Ejecuta una consulta liviana a la base de datos para reiniciar el temporizador de 7 días.
+    Ejecuta operaciones de escritura (INSERT/UPDATE) y lectura en PostgreSQL y realiza peticiones
+    al API Gateway de Supabase para reiniciar todos los contadores de inactividad de 7 días.
     """
     try:
-        config = database.get_configuracion()
+        ping_data = database.keepalive_ping()
+
+        # Notificar también al API Gateway de Supabase (PostgREST / Kong) si está configurado
+        rest_status = None
+        supabase_url = os.environ.get("SUPABASE_URL", "https://acrkscfshsmbmoqhxmxh.supabase.co").rstrip("/")
+        anon_key = os.environ.get("SUPABASE_ANON_KEY", "").strip()
+        try:
+            import urllib.request
+            headers = {"User-Agent": "Viaticos-FCEJS-KeepAlive/1.0"}
+            if anon_key:
+                headers["apikey"] = anon_key
+                headers["Authorization"] = f"Bearer {anon_key}"
+                target_url = f"{supabase_url}/rest/v1/keepalive_heartbeat?select=id,ultimo_ping,contador&limit=1"
+            else:
+                target_url = f"{supabase_url}/auth/v1/health"
+            req = urllib.request.Request(target_url, headers=headers, method="GET")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                rest_status = resp.status
+        except Exception as rest_err:
+            rest_status = f"skip ({rest_err})"
+
         return jsonify({
             "status": "ok",
-            "message": "Base de datos activa y respondiendo correctamente",
-            "timestamp": datetime.now().isoformat(),
-            "facultad": config.get("facultad", "FCEJS")
+            "message": "Base de datos activa (lectura + escritura ejecutadas correctamente)",
+            "timestamp": ping_data.get("ultimo_ping"),
+            "contador_keepalive": ping_data.get("contador"),
+            "facultad": ping_data.get("facultad", "FCEJS"),
+            "rest_gateway": rest_status
         }), 200
     except Exception as e:
         return jsonify({
@@ -154,6 +177,7 @@ def api_keepalive():
             "message": str(e),
             "timestamp": datetime.now().isoformat()
         }), 500
+
 
 
 # ------------------ API DATOS INICIALES ------------------

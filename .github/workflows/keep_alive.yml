@@ -2,21 +2,43 @@ name: Mantener Supabase Activo (Keep-Alive)
 
 on:
   schedule:
-    # Se ejecuta los lunes, miércoles y viernes a las 12:00 UTC (cada 2 días aprox.)
-    - cron: '0 12 * * 1,3,5'
+    # Se ejecuta todos los días cada 12 horas (08:00 y 20:00 UTC)
+    - cron: '0 8,20 * * *'
   workflow_dispatch: # Permite dispararlo manualmente en cualquier momento desde GitHub
 
 jobs:
   ping-keepalive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Keep-Alive a la base de datos
+      - name: Ping Keep-Alive (Escritura + Lectura en DB y Gateway)
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          echo "Realizando ping al endpoint /api/keepalive..."
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://viaticos-fcejs.vercel.app/api/keepalive")
-          echo "$RESPONSE"
-          if echo "$RESPONSE" | grep -q "HTTP_STATUS:200"; then
-            echo "✅ Ping exitoso: Base de datos activa y temporizador reiniciado."
+          echo "1. Realizando ping al API Gateway de Supabase..."
+          if [ -n "$SUPABASE_ANON_KEY" ]; then
+            curl -s -S -X GET "https://acrkscfshsmbmoqhxmxh.supabase.co/rest/v1/keepalive_heartbeat?select=id,ultimo_ping,contador&limit=1" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" || true
           else
-            echo "⚠️ Aviso: No se obtuvo HTTP 200. Verifique el estado del servidor."
+            curl -s -S -X GET "https://acrkscfshsmbmoqhxmxh.supabase.co/auth/v1/health" || true
+          fi
+
+          echo ""
+          echo "2. Realizando ping de lectura/escritura a /api/keepalive en Vercel..."
+          SUCCESS=0
+          for i in 1 2 3; do
+            echo "Intento $i..."
+            RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://viaticos-fcejs.vercel.app/api/keepalive")
+            echo "$RESPONSE"
+            if echo "$RESPONSE" | grep -q "HTTP_STATUS:200"; then
+              echo "✅ Ping exitoso: Lectura y escritura ejecutadas en Supabase."
+              SUCCESS=1
+              break
+            fi
+            sleep 5
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "❌ Error: La base de datos no respondió con HTTP 200 (posiblemente pausada en Supabase)."
+            exit 1
           fi

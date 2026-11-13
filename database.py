@@ -349,6 +349,55 @@ def get_configuracion():
     return row or {}
 
 
+def keepalive_ping():
+    """
+    Ejecuta una operación real de escritura (INSERT/UPDATE) y lectura en la base de datos
+    para garantizar que Supabase registre actividad transaccional (WAL + pg_stat_user_tables)
+    y reinicie el contador de inactividad de 7 días.
+    """
+    now_iso = datetime.now().isoformat()
+    execute_query(
+        """
+        CREATE TABLE IF NOT EXISTS keepalive_heartbeat (
+            id INTEGER PRIMARY KEY,
+            ultimo_ping TEXT,
+            contador INTEGER DEFAULT 0
+        )
+        """,
+        fetch="none"
+    )
+    if IS_POSTGRES:
+        try:
+            execute_query("ALTER TABLE public.keepalive_heartbeat DISABLE ROW LEVEL SECURITY", fetch="none")
+            execute_query("GRANT SELECT, INSERT, UPDATE ON public.keepalive_heartbeat TO anon, authenticated", fetch="none")
+        except Exception:
+            pass
+
+    existing = execute_query("SELECT id, contador FROM keepalive_heartbeat WHERE id = 1", fetch="one")
+    if existing:
+        nuevo_contador = int(existing.get("contador") or 0) + 1
+        execute_query(
+            "UPDATE keepalive_heartbeat SET ultimo_ping = :now_iso, contador = :contador WHERE id = 1",
+            {"now_iso": now_iso, "contador": nuevo_contador},
+            fetch="none"
+        )
+    else:
+        nuevo_contador = 1
+        execute_query(
+            "INSERT INTO keepalive_heartbeat (id, ultimo_ping, contador) VALUES (1, :now_iso, 1)",
+            {"now_iso": now_iso},
+            fetch="none"
+        )
+
+    config = get_configuracion()
+    return {
+        "ultimo_ping": now_iso,
+        "contador": nuevo_contador,
+        "facultad": config.get("facultad", "FCEJS")
+    }
+
+
+
 def update_configuracion(data: dict):
     sql = """
         UPDATE configuracion SET
